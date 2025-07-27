@@ -99,18 +99,18 @@ public class ModelPartMixin implements IAcceleratedRenderer<Void> {
 
 		for (var cube : cubes) {
 			for (var polygon : cube.polygons) {
-				var polygonNormal = polygon.normal;
+				var polygonNormal = polygon.normal();
 
-				for (var vertex : polygon.vertices) {
-					var vertexPosition = vertex.pos;
+				for (var vertex : polygon.vertices()) {
+					var vertexPosition = vertex.pos();
 
 					meshBuilder.addVertex(
 							vertexPosition.x / 16.0f,
 							vertexPosition.y / 16.0f,
 							vertexPosition.z / 16.0f,
 							-1,
-							vertex.u,
-							vertex.v,
+							vertex.u(),
+							vertex.v(),
 							overlay,
 							0,
 							polygonNormal.x,

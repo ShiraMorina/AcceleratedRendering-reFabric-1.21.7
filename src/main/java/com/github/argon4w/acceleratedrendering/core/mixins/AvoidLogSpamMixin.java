@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GlDebug.class)
 public class AvoidLogSpamMixin {
     @Inject(
-        method = "printDebugLog",
-        at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;)V", shift = At.Shift.BEFORE),
-        cancellable = true
+            method = "printDebugLog",
+            at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;)V", shift = At.Shift.BEFORE),
+            cancellable = true, remap = false
     )
     private static void avoidSpam(int source, int type, int id, int severity, int messageLength, long message, long userParam, CallbackInfo ci) {
         if (severity != 37190) ci.cancel();

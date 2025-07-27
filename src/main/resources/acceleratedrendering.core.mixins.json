@@ -5,7 +5,6 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "AvoidLogSpamMixin",
-    "MCItemColorsAccessor",
     "BufferBuilderMixin",
     "BufferSourceMixin",
     "EntityOutlineGeneratorMixin",

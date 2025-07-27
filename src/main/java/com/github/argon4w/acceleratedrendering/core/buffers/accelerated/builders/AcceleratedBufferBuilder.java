@@ -9,6 +9,7 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderer
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
+import com.github.argon4w.acceleratedrendering.core.utils.ABGR;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -16,7 +17,6 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.util.FastColor;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
@@ -284,7 +284,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		posOffset		.putFloat	(vertexAddress + 0L,	pX);
 		posOffset		.putFloat	(vertexAddress + 4L,	pY);
 		posOffset		.putFloat	(vertexAddress + 8L,	pZ);
-		colorOffset		.putInt		(vertexAddress,			FastColor.ABGR32.fromArgb32(pColor));
+		colorOffset		.putInt		(vertexAddress,			ABGR.fromArgb32(pColor));
 		uv0Offset		.putFloat	(vertexAddress + 0L,	pU);
 		uv0Offset		.putFloat	(vertexAddress + 4L,	pV);
 		uv1Offset		.putInt		(vertexAddress,			pPackedOverlay);
@@ -358,7 +358,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 				bufferSize
 		);
 
-		colorOffset		.putInt(vertexAddress,	FastColor.ABGR32.fromArgb32(color));
+		colorOffset		.putInt(vertexAddress,	ABGR.fromArgb32(color));
 		uv1Offset		.putInt(vertexAddress,	overlay);
 		uv2Offset		.putInt(vertexAddress,	light);
 
@@ -390,7 +390,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		data.addExtraVertex	(vertexAddress);
 		data.addExtraVarying(varyingAddress);
 
-		colorOffset		.putInt(vertexAddress,	FastColor.ABGR32.fromArgb32(color));
+		colorOffset		.putInt(vertexAddress,	ABGR.fromArgb32(color));
 		uv1Offset		.putInt(vertexAddress,	overlay);
 		uv2Offset		.putInt(vertexAddress,	light);
 

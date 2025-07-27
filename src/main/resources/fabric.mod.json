@@ -22,7 +22,6 @@
 		"acceleratedrendering.compat.iris.mixins.json",
 		"acceleratedrendering.core.mixins.json",
 		"acceleratedrendering.feature.entities.mixins.json",
-		"acceleratedrendering.feature.items.mixins.json",
 		"acceleratedrendering.feature.modelparts.mixins.json",
 		"acceleratedrendering.feature.text.mixins.json"
 	],
