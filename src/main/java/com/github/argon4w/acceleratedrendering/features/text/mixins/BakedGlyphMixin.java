@@ -47,21 +47,25 @@ public class BakedGlyphMixin {
 		) {
 			ci.cancel();
 
+			var color = FastColor.ABGR32.color(
+					(int) (pAlpha	* 255.0F),
+					(int) (pBlue	* 255.0F),
+					(int) (pGreen	* 255.0F),
+					(int) (pRed		* 255.0F)
+			);
+
+			var renderer = pItalic
+					? italicRenderer
+					: normalRenderer;
+
 			extension.doRender(
-					pItalic
-							? italicRenderer
-							: normalRenderer,
+					renderer,
 					new Vector2f(pX, pY),
 					pMatrix,
 					null,
 					pPackedLight,
-					OverlayTexture	.NO_OVERLAY,
-					FastColor.ABGR32.color(
-							(int) (pAlpha	* 255.0F),
-							(int) (pBlue	* 255.0F),
-							(int) (pGreen	* 255.0F),
-							(int) (pRed		* 255.0F)
-					)
+					OverlayTexture.NO_OVERLAY,
+					color
 			);
 		}
 	}

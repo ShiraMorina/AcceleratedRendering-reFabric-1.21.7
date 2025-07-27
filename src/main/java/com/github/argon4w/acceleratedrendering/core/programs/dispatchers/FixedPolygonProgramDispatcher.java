@@ -7,37 +7,42 @@ import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgra
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
 
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
+
 public class FixedPolygonProgramDispatcher implements IPolygonProgramDispatcher {
 
-	private static	final int				GROUP_SIZE				= 128;
-	private static	final int				DISPATCH_COUNT_Y_Z		= 1;
+	private static	final int				GROUP_SIZE = 128;
 
 	private			final VertexFormat.Mode	mode;
 	private			final ComputeProgram	program;
 	private			final Uniform			polygonCountUniform;
 	private			final Uniform			vertexOffsetUniform;
 
-	public FixedPolygonProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
+	public FixedPolygonProgramDispatcher(VertexFormat.Mode mode, ComputeProgram program) {
 		this.mode					= mode;
-		this.program				= ComputeShaderProgramLoader.getProgram(key);
-		this.polygonCountUniform	= this.program				.getUniform("polygonCount");
-		this.vertexOffsetUniform	= this.program				.getUniform("vertexOffset");
+		this.program				= program;
+		this.polygonCountUniform	= this.program.getUniform("polygonCount");
+		this.vertexOffsetUniform	= this.program.getUniform("vertexOffset");
+	}
+
+	public FixedPolygonProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
+		this(mode, ComputeShaderProgramLoader.getProgram(key));
 	}
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder			.getTotalVertexCount();
+		var vertexCount		= builder.getVertexCount	();
+		var vertexOffset	= builder.getVertexOffset	();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
+		builder.getVaryingBuffer().bindBase(GL_SHADER_STORAGE_BUFFER, 3);
+
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt((int) (builder.getVertexBuffer().getOffset() / builder.getVertexSize()));
+		vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
 
 		program.useProgram	();
-		program.dispatch	(
-				(polygonCount + GROUP_SIZE - 1) / GROUP_SIZE,
-				DISPATCH_COUNT_Y_Z,
-				DISPATCH_COUNT_Y_Z
-		);
+		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
+		program.resetProgram();
 
 		return program.getBarrierFlags();
 	}

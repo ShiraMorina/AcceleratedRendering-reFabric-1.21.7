@@ -19,18 +19,18 @@ layout(location=1) uniform uint polygonCount;
 layout(location=2) uniform uint vertexOffset;
 
 void main() {
-    uint index      = gl_GlobalInvocationID.x;
-    uint base       = index * 3u;
+    uint index = gl_GlobalInvocationID.x;
+    uint base = index * 3u;
 
     if (index >= polygonCount) {
         return;
     }
 
-    uint index1     = vertexOffset + base + 0u;
-    uint index2     = vertexOffset + base + 1u;
-    uint index3     = vertexOffset + base + 2u;
+    uint index1 = vertexOffset + base + 0u;
+    uint index2 = vertexOffset + base + 1u;
+    uint index3 = vertexOffset + base + 2u;
 
-    uint indexOut   = atomicCounterAdd(indexCounter, 3u) / 3u;
+    uint indexOut = atomicCounterAdd(indexCounter, 3u) / 3u;
 
     polygonsOut[indexOut].vertex1 = index1;
     polygonsOut[indexOut].vertex2 = index2;

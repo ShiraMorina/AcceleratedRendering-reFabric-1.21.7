@@ -49,6 +49,6 @@ public class SimpleMemoryInterface implements IMemoryInterface {
 
 	@Override
 	public IMemoryInterface at(int index) {
-		return new SimpleMemoryInterface(index * size + offset, size);
+		return new SimpleMemoryInterface(index * size + offset, 0);
 	}
 }

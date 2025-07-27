@@ -1,22 +1,25 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools;
 
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
-import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
-import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.SegmentBuffer;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
 import static org.lwjgl.opengl.GL46.*;
 
-public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDrawContext, MappedBuffer> {
+public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDrawContext, SegmentBuffer> {
 
 	public DrawContextPool(int size) {
-		super(size, new MappedBuffer(20L * size));
+		super(size, new SegmentBuffer(20L * size, size));
+	}
+
+	public void bindCommandBuffer() {
+		getContext().bind(GL_DRAW_INDIRECT_BUFFER);
 	}
 
 	@Override
-	protected IndirectDrawContext create(MappedBuffer buffer, int i) {
-		return new IndirectDrawContext(i);
+	protected IndirectDrawContext create(SegmentBuffer buffer, int i) {
+		return new IndirectDrawContext(buffer.getSegment(20L));
 	}
 
 	@Override
@@ -31,49 +34,40 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 
 	@Override
 	public void delete() {
-		getContext().delete();
+		super.getContext().delete();
 	}
 
-	@Override
-	public IndirectDrawContext fail() {
-		expand();
-		return get();
+	public static void waitBarriers() {
+		glMemoryBarrier(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 	}
 
-	public class IndirectDrawContext {
+	public static class IndirectDrawContext {
 
-		public static	final int				ELEMENT_COUNT_INDEX		= 0;
-		public static	final IMemoryInterface	INDIRECT_COUNT			= new SimpleMemoryInterface(0L * 4L, 4);
-		public static	final IMemoryInterface	INDIRECT_INSTANCE_COUNT	= new SimpleMemoryInterface(1L * 4L, 4);
-		public static	final IMemoryInterface	INDIRECT_FIRST_INDEX	= new SimpleMemoryInterface(2L * 4L, 4);
-		public static	final IMemoryInterface	INDIRECT_BASE_INDEX		= new SimpleMemoryInterface(3L * 4L, 4);
-		public static	final IMemoryInterface	INDIRECT_BASE_INSTANCE	= new SimpleMemoryInterface(4L * 4L, 4);
+		private final	long			commandOffset;
+		private final	IServerBuffer	commandBuffer;
 
-		private			final long				commandOffset;
+		private			int				cachedOffset;
 
-		public IndirectDrawContext(int index) {
-			this.commandOffset	= index * 20L;
-			var address			= context		.reserve(20L);
+		public IndirectDrawContext(IServerBuffer commandBuffer) {
+			this.commandOffset	= commandBuffer.getOffset();
+			this.commandBuffer	= commandBuffer;
+			this.commandBuffer.subData(0, new int[] {0, 1, 0, 0, 0});
 
-			INDIRECT_COUNT						.putInt	(address, 0);
-			INDIRECT_INSTANCE_COUNT				.putInt	(address, 1);
-			INDIRECT_FIRST_INDEX				.putInt	(address, 0);
-			INDIRECT_BASE_INDEX					.putInt	(address, 0);
-			INDIRECT_BASE_INSTANCE				.putInt	(address, 0);
+			this.cachedOffset	= -1;
 		}
 
 		public void bindComputeBuffers(ElementBufferPool.ElementSegment elementSegmentIn) {
-			var elementOffset		= elementSegmentIn	.getOffset	();
-			var commandAddress		= context			.addressAt	(commandOffset);
+			var elementBufferOut	= elementSegmentIn.getBuffer();
+			var elementOffset		= elementBufferOut.getOffset();
 
-			INDIRECT_COUNT		.putInt		(commandAddress,	0);
-			INDIRECT_FIRST_INDEX.putInt		(commandAddress,	(int) elementOffset / 4);
-			context				.bindRange	(
-					GL_ATOMIC_COUNTER_BUFFER,
-					ELEMENT_COUNT_INDEX,
-					commandOffset,
-					4
-			);
+			if (cachedOffset != elementOffset) {
+				cachedOffset = elementOffset;
+				commandBuffer.clearInteger(8, elementOffset / 4);
+			}
+
+			commandBuffer	.clearInteger	(0,							0);
+			commandBuffer	.bindBase		(GL_ATOMIC_COUNTER_BUFFER,	0);
+			elementBufferOut.bindBase		(GL_SHADER_STORAGE_BUFFER,	6);
 		}
 
 		public void drawElements(VertexFormat.Mode mode) {

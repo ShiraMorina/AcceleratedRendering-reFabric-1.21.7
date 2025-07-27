@@ -13,7 +13,8 @@ public class CoreBuffersMixin {
 
 	@ModifyReturnValue(
 			method	= "getCoreBufferSourceSet",
-			at		= @At("RETURN")
+			at		= @At("RETURN"),
+			remap 	= false
 	)
 	private static AcceleratedBufferSources getShadowBufferSourceSet(AcceleratedBufferSources original) {
 		return ShadowRenderingState.areShadowsCurrentlyBeingRendered() ? IrisCompatBuffers.SHADOW : original;

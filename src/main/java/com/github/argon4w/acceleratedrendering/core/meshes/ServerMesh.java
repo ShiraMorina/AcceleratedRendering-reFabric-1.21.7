@@ -1,6 +1,5 @@
 package com.github.argon4w.acceleratedrendering.core.meshes;
 
-import com.github.argon4w.acceleratedrendering.core.backends.GLConstants;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
@@ -8,16 +7,16 @@ import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.IMeshCollector;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import lombok.AllArgsConstructor;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.Map;
 
-public record ServerMesh(
-		long			size,
-		long			offset,
-		IServerBuffer	meshBuffer
-) implements IMesh {
+@AllArgsConstructor
+public class ServerMesh implements IMesh {
+
+	private final int size;
+	private final int offset;
 
 	@Override
 	public void write(
@@ -27,7 +26,8 @@ public record ServerMesh(
 			int							overlay
 	) {
 		extension.addServerMesh(
-				this,
+				offset,
+				size,
 				color,
 				light,
 				overlay
@@ -36,72 +36,55 @@ public record ServerMesh(
 
 	public static class Builder implements IMesh.Builder {
 
-		public static final Builder																		INSTANCE	= new Builder					();
-		public static final Map<IMemoryLayout<VertexFormatElement>, ReferenceArrayList<MappedBuffer>>	BUFFERS		= new Object2ObjectOpenHashMap<>();
+		public static	final Builder													INSTANCE = new Builder();
+
+		public			final Map<IMemoryLayout<VertexFormatElement>, IServerBuffer>	serverBuffers;
 
 		private Builder() {
-
+			this.serverBuffers = new Object2ObjectOpenHashMap<>();
 		}
 
 		@Override
 		public IMesh build(IMeshCollector collector) {
-			var vertexCount		= collector.getVertexCount();
+			var vertexCount = collector.getVertexCount();
 
 			if (vertexCount == 0) {
 				return EmptyMesh.INSTANCE;
 			}
 
-			var builder			= collector	.getBuffer	();
-			var result			= builder	.build		();
+			var builder	= collector	.getBuffer	();
+			var result	= builder	.build		();
 
 			if (result == null) {
 				builder.close();
 				return EmptyMesh.INSTANCE;
 			}
 
-			var clientBuffer	= result		.byteBuffer	();
-			var layout			= collector		.getLayout	();
-			var meshBuffers		= BUFFERS		.get		(layout);
+			var clientBuffer = result						.byteBuffer();
+			var serverBuffer = (MappedBuffer) serverBuffers	.get(collector.getLayout());
 
-			if (meshBuffers == null) {
-				meshBuffers = new ReferenceArrayList<>	();
-				BUFFERS.put 							(layout, meshBuffers);
+			if (serverBuffer == null) {
+				serverBuffer = new MappedBuffer	(1024L, true);
+				serverBuffers.put				(collector.getLayout(), serverBuffer);
 			}
 
-			var meshBuffer		= meshBuffers.isEmpty() ? null : meshBuffers	.getLast	();
-			var capacity		= clientBuffer									.capacity	();
+			var capacity = clientBuffer.capacity	();
+			var position = serverBuffer.getPosition();
 
-			if (		meshBuffer == null
-					||	meshBuffer.getPosition() + capacity >= GLConstants.MAX_SHADER_STORAGE_BLOCK_SIZE
-			) {
-				meshBuffer = new MappedBuffer	(64L);
-				meshBuffers.add					(meshBuffer);
-			}
-
-			var position		= meshBuffer	.getPosition();
-			var srcAddress		= MemoryUtil	.memAddress0(clientBuffer);
-			var destAddress		= meshBuffer	.reserve	(capacity);
-
-			MemoryUtil	.memCopy(
-					srcAddress,
-					destAddress,
+			MemoryUtil.memCopy(
+					MemoryUtil.memAddress0	(clientBuffer),
+					serverBuffer.reserve	(capacity),
 					capacity
 			);
-			builder		.close	();
 
-			return new ServerMesh(
-					vertexCount,
-					position / layout.getSize(),
-					meshBuffer
-			);
+			builder.close();
+			return new ServerMesh(vertexCount, (int) position);
 		}
 
 		@Override
-		public void delete() {
-			for (		var buffers	: BUFFERS.values()) {
-				for (	var buffer	: buffers) {
-					buffer.delete();
-				}
+		public void close() {
+			for (var buffer : serverBuffers.values()) {
+				((MappedBuffer) buffer).delete();
 			}
 		}
 	}

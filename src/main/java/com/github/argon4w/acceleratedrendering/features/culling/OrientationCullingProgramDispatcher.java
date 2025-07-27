@@ -4,15 +4,14 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputePro
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
-import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
 
-public class OrientationCullingProgramDispatcher implements ICullingProgramDispatcher {
+public class OrientationCullingProgramDispatcher implements IPolygonProgramDispatcher {
 
-	private static  final int				GROUP_SIZE 			= 128;
-	private static	final int				DISPATCH_COUNT_Y_Z	= 1;
+	private static  final int				GROUP_SIZE = 128;
 
 	private			final VertexFormat.Mode	mode;
 	private			final ComputeProgram	program;
@@ -20,7 +19,6 @@ public class OrientationCullingProgramDispatcher implements ICullingProgramDispa
 	private			final Uniform			projectMatrixUniform;
 	private			final Uniform			polygonCountUniform;
 	private			final Uniform			vertexOffsetUniform;
-	private			final Uniform			varyingOffsetUniform;
 
 	public OrientationCullingProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
 		this.mode					= mode;
@@ -29,32 +27,23 @@ public class OrientationCullingProgramDispatcher implements ICullingProgramDispa
 		this.projectMatrixUniform	= this.program				.getUniform("projectMatrix");
 		this.polygonCountUniform	= this.program				.getUniform("polygonCount");
 		this.vertexOffsetUniform	= this.program				.getUniform("vertexOffset");
-		this.varyingOffsetUniform	= this.program				.getUniform("varyingOffset");
 	}
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder			.getTotalVertexCount();
+		var vertexCount		= builder.getVertexCount	();
+		var vertexOffset	= builder.getVertexOffset	();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
-		viewMatrixUniform	.uploadMatrix4f		(RenderSystem	.getModelViewMatrix	());
-		projectMatrixUniform.uploadMatrix4f		(RenderSystem	.getProjectionMatrix());
+		viewMatrixUniform	.uploadMatrix4f		(RenderSystem.getModelViewMatrix());
+		projectMatrixUniform.uploadMatrix4f		(RenderSystem.getProjectionMatrix());
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) (builder	.getVertexBuffer	().getOffset() / builder					.getVertexSize()));
-		varyingOffsetUniform.uploadUnsignedInt	((int) (builder	.getVaryingBuffer	().getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
+		vertexOffsetUniform	.uploadUnsignedInt	(vertexOffset);
 
 		program.useProgram	();
-		program.dispatch	(
-				(polygonCount + GROUP_SIZE - 1) / GROUP_SIZE,
-				DISPATCH_COUNT_Y_Z,
-				DISPATCH_COUNT_Y_Z
-		);
+		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
+		program.resetProgram();
 
 		return program.getBarrierFlags();
-	}
-
-	@Override
-	public boolean shouldCull() {
-		return OrientationCullingFeature.shouldCull();
 	}
 }

@@ -1,14 +1,17 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.environments;
 
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.EmptyServerBuffer;
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.VertexFormatMemoryLayout;
-import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramSelector;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
-import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.extras.CompositeExtraVertex;
+import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -30,15 +33,13 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 			IBufferEnvironment	vanillaSubSet,
 			VertexFormat		vanillaVertexFormat,
 			VertexFormat		irisVertexFormat,
-			ResourceLocation	meshUploadingProgramKey,
-			ResourceLocation	transformProgramKey
+			ResourceLocation	transformProgram
 	) {
 		this.vanillaSubSet	= vanillaSubSet;
 		this.irisSubSet		= new IrisSubSet(
 				vanillaVertexFormat,
 				irisVertexFormat,
-				meshUploadingProgramKey,
-				transformProgramKey
+				transformProgram
 		);
 	}
 
@@ -57,13 +58,18 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
+	public IExtraVertexData getExtraVertex(VertexFormat.Mode mode) {
+		return getSubSet().getExtraVertex(mode);
+	}
+
+	@Override
 	public IMemoryLayout<VertexFormatElement> getLayout() {
 		return getSubSet().getLayout();
 	}
 
 	@Override
-	public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
-		return getSubSet().selectMeshUploadingProgramDispatcher();
+	public IServerBuffer getServerMeshBuffer() {
+		return getSubSet().getServerMeshBuffer();
 	}
 
 	@Override
@@ -72,8 +78,8 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public ICullingProgramDispatcher selectCullingProgramDispatcher(RenderType renderType) {
-		return getSubSet().selectCullingProgramDispatcher(renderType);
+	public IPolygonProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
+		return getSubSet().selectCullProgramDispatcher(renderType);
 	}
 
 	@Override
@@ -97,7 +103,6 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		private final VertexFormat							irisVertexFormat;
 		private final IMemoryLayout<VertexFormatElement>	layout;
 
-		private final MeshUploadingProgramDispatcher		meshUploadingProgramDispatcher;
 		private final TransformProgramDispatcher			transformProgramDispatcher;
 		private final ICullingProgramSelector				cullingProgramSelector;
 		private final IPolygonProcessor						polygonProcessor;
@@ -105,18 +110,15 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		public IrisSubSet(
 				VertexFormat		vanillaVertexFormat,
 				VertexFormat		irisVertexFormat,
-				ResourceLocation	meshUploadingProgramKey,
-				ResourceLocation	transformProgramKey
-
+				ResourceLocation	transformProgram
 		) {
-			this.vanillaVertexFormat			= vanillaVertexFormat;
-			this.irisVertexFormat				= irisVertexFormat;
-			this.layout							= new VertexFormatMemoryLayout		(irisVertexFormat);
+			this.vanillaVertexFormat		= vanillaVertexFormat;
+			this.irisVertexFormat			= irisVertexFormat;
+			this.layout						= new VertexFormatMemoryLayout(irisVertexFormat);
 
-			this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
-			this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
-			this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector	();
-			this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor	();
+			this.transformProgramDispatcher	= new TransformProgramDispatcher(transformProgram);
+			this.cullingProgramSelector		= ModLoader.postEventWithReturn	(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector();
+			this.polygonProcessor			= ModLoader.postEventWithReturn	(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor();
 		}
 
 		@Override
@@ -135,13 +137,18 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		}
 
 		@Override
+		public IExtraVertexData getExtraVertex(VertexFormat.Mode mode) {
+			return new CompositeExtraVertex(cullingProgramSelector.getExtraVertex(mode), polygonProcessor.getExtraVertex(mode));
+		}
+
+		@Override
 		public IMemoryLayout<VertexFormatElement> getLayout() {
 			return layout;
 		}
 
 		@Override
-		public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
-			return meshUploadingProgramDispatcher;
+		public IServerBuffer getServerMeshBuffer() {
+			return ServerMesh.Builder.INSTANCE.serverBuffers.getOrDefault(layout, EmptyServerBuffer.INSTANCE);
 		}
 
 		@Override
@@ -150,7 +157,7 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		}
 
 		@Override
-		public ICullingProgramDispatcher selectCullingProgramDispatcher(RenderType renderType) {
+		public IPolygonProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
 			return cullingProgramSelector.select(renderType);
 		}
 

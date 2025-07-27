@@ -14,17 +14,17 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 public class CulledMeshCollector implements VertexConsumer, IMeshCollector {
 
 	private final	int					polygonSize;
+	private final	Vertex[]			polygon;
 	private final	NativeImage			texture;
 	private final	SimpleMeshCollector	meshCollector;
-	private final	Vertex[]			polygon;
 
 	private			int					vertexIndex;
 
 	public CulledMeshCollector(RenderType renderType, IMemoryLayout<VertexFormatElement> layout) {
-		this.polygonSize	= renderType.mode	.primitiveLength;
-		this.texture		= TextureUtils		.downloadTexture(renderType, 0);
-		this.meshCollector	= new SimpleMeshCollector			(layout);
+		this.polygonSize	= renderType.mode.primitiveLength;
 		this.polygon		= new Vertex[this.polygonSize];
+		this.texture		= TextureUtils.downloadTexture	(renderType, 0);
+		this.meshCollector	= new SimpleMeshCollector		(layout);
 
 		this.vertexIndex	= -1;
 	}

@@ -2,8 +2,6 @@ package com.github.argon4w.acceleratedrendering.core.backends.buffers;
 
 import com.github.argon4w.acceleratedrendering.core.utils.MutableSize;
 
-import java.nio.ByteBuffer;
-
 public class MutableBuffer extends MutableSize implements IServerBuffer {
 
 	private final	int				bits;
@@ -14,13 +12,16 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 		super(initialSize);
 
 		this.bits		= bits;
-		this.glBuffer	= new ImmutableBuffer(this.size, bits);
+		this.glBuffer	= new ImmutableBuffer	(this.size,	bits);
+		this.glBuffer.clearBytes				(0L,		this.size);
 	}
 
 	@Override
 	public void doExpand(long size, long bytes) {
 		var newSize		= size + bytes;
 		var newBuffer	= new ImmutableBuffer(newSize, bits);
+
+		newBuffer.clearBytes(0L, newSize);
 
 		glBuffer.copyTo(newBuffer, size);
 		glBuffer.delete();
@@ -35,8 +36,13 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 		glBuffer.unmap();
 	}
 
-	public void copyTo(IServerBuffer buffer) {
-		glBuffer.copyTo(buffer, size);
+	public void delete() {
+		glBuffer.delete();
+	}
+
+	@Override
+	public int getOffset() {
+		return 0;
 	}
 
 	@Override
@@ -45,18 +51,23 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 	}
 
 	@Override
-	public void delete() {
-		glBuffer.delete();
-	}
-
-	@Override
 	public void bind(int target) {
 		glBuffer.bind(target);
 	}
 
 	@Override
-	public void data(ByteBuffer data) {
-		glBuffer.data(data);
+	public void clearInteger(long offset, int value) {
+		glBuffer.clearInteger(offset, value);
+	}
+
+	@Override
+	public void clearBytes(long offset, long size) {
+		glBuffer.clearBytes(offset, size);
+	}
+
+	@Override
+	public void subData(long offset, int[] data) {
+		glBuffer.subData(offset, data);
 	}
 
 	@Override

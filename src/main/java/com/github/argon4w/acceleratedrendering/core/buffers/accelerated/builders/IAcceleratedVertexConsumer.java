@@ -3,7 +3,6 @@ package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builder
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IBufferDecorator;
-import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix3f;
@@ -61,10 +60,11 @@ public interface IAcceleratedVertexConsumer extends IBufferDecorator, IBufferGra
 	}
 
 	default void addServerMesh(
-			ServerMesh	serverMesh,
-			int			color,
-			int			light,
-			int			overlay
+			int offset,
+			int size,
+			int color,
+			int light,
+			int overlay
 	) {
 		throw new UnsupportedOperationException("Unsupported Operation.");
 	}

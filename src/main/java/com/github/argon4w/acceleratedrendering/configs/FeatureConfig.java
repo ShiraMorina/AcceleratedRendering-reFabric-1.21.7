@@ -1,44 +1,42 @@
 package com.github.argon4w.acceleratedrendering.configs;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshInfoCacheType;
 import com.github.argon4w.acceleratedrendering.core.meshes.MeshType;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class FeatureConfig {
 
-	public static final	FeatureConfig									CONFIG;
-	public static final	ModConfigSpec									SPEC;
+	public static final	FeatureConfig								CONFIG;
+	public static final	ModConfigSpec								SPEC;
 
-	public final		ModConfigSpec.IntValue							corePooledBufferSetSize;
-	public final		ModConfigSpec.IntValue							corePooledElementBufferSize;
-	public final		ModConfigSpec.IntValue							coreCachedImageSize;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		coreDebugContextEnabled;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		coreForceTranslucentAcceleration;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		coreCacheIdenticalPose;
-	public final		ModConfigSpec.ConfigValue<MeshInfoCacheType>	coreMeshInfoCacheType;
+	public final		ModConfigSpec.IntValue						corePooledBufferSetSize;
+	public final		ModConfigSpec.IntValue						corePooledElementBufferSize;
+	public final		ModConfigSpec.IntValue						coreCachedImageSize;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	coreDebugContextEnabled;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	coreForceTranslucentAcceleration;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	coreCacheIdenticalPose;
 
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		acceleratedEntityRenderingFeatureStatus;
-	public final		ModConfigSpec.ConfigValue<PipelineSetting>		acceleratedEntityRenderingDefaultPipeline;
-	public final		ModConfigSpec.ConfigValue<MeshType>				acceleratedEntityRenderingMeshType;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	acceleratedEntityRenderingFeatureStatus;
+	public final		ModConfigSpec.ConfigValue<PipelineSetting>	acceleratedEntityRenderingDefaultPipeline;
+	public final		ModConfigSpec.ConfigValue<MeshType>			acceleratedEntityRenderingMeshType;
 
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		acceleratedTextRenderingFeatureStatus;
-	public final		ModConfigSpec.ConfigValue<PipelineSetting>		acceleratedTextRenderingDefaultPipeline;
-	public final		ModConfigSpec.ConfigValue<MeshType>				acceleratedTextRenderingMeshType;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	acceleratedTextRenderingFeatureStatus;
+	public final		ModConfigSpec.ConfigValue<PipelineSetting>	acceleratedTextRenderingDefaultPipeline;
+	public final		ModConfigSpec.ConfigValue<MeshType>			acceleratedTextRenderingMeshType;
 
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		acceleratedItemRenderingFeatureStatus;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		acceleratedItemRenderingBakeMeshForQuads;
-	public final		ModConfigSpec.ConfigValue<PipelineSetting>		acceleratedItemRenderingDefaultPipeline;
-	public final		ModConfigSpec.ConfigValue<MeshType>				acceleratedItemRenderingMeshType;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	acceleratedItemRenderingFeatureStatus;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	acceleratedItemRenderingBakeMeshForQuads;
+	public final		ModConfigSpec.ConfigValue<PipelineSetting>	acceleratedItemRenderingDefaultPipeline;
+	public final		ModConfigSpec.ConfigValue<MeshType>			acceleratedItemRenderingMeshType;
 
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		orientationCullingFeatureStatus;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		orientationCullingDefaultCulling;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		orientationCullingIgnoreCullState;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	orientationCullingFeatureStatus;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	orientationCullingDefaultCulling;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	orientationCullingIgnoreCullState;
 
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		irisCompatFeatureStatus;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		irisCompatOrientationCullingCompat;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		irisCompatShadowCulling;
-	public final		ModConfigSpec.ConfigValue<FeatureStatus>		irisCompatPolygonProcessing;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	irisCompatFeatureStatus;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	irisCompatOrientationCullingCompat;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	irisCompatShadowCulling;
+	public final		ModConfigSpec.ConfigValue<FeatureStatus>	irisCompatPolygonProcessing;
 
 	static {
 		Pair<FeatureConfig, ModConfigSpec> pair	= new ModConfigSpec.Builder()	.configure	(FeatureConfig::new);
@@ -91,14 +89,6 @@ public class FeatureConfig {
 				.comment		("- ENABLED: Poses with identical transform matrix and normal matrix that used to transform vertices will be cached in buffer which save VRAM but slightly increase CPU pressure unless mods explicitly disable it when rendering.")
 				.translation	("acceleratedrendering.configuration.core_settings.cache_identical_pose")
 				.defineEnum		("cache_identical_pose",				FeatureStatus.ENABLED);
-
-		coreMeshInfoCacheType							= builder
-				.comment		("- SIMPLE: The most basic implementation of cache. Usually used for testing if other cache types are working properly.")
-				.comment		("- HANDLE: Faster implementation of cache using VarHandle and flatten values to improve performance on read/write operations.")
-				.comment		("- UNSAFE: Fastest implementation of cache using unsafe memory operations that skip multiple safety checks to read/write.")
-				.translation	("acceleratedrendering.configuration.core_settings.mesh_info_cache_type")
-				.gameRestart	()
-				.defineEnum		("mesh_info_cache_type",				MeshInfoCacheType.HANDLE);
 
 		builder.pop();
 

@@ -1,7 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedSheetedDecalTextureGenerator;
-import com.github.argon4w.acceleratedrendering.core.utils.FuzzyMatrix4f;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -38,8 +37,8 @@ public class SheetedDecalTextureRenderer<T> implements IAcceleratedRenderer<T> {
 		renderer.render(
 				new AcceleratedSheetedDecalTextureGenerator(
 						vertexConsumer,
-						new FuzzyMatrix4f	(cameraInverse).mul(transform),
-						new Matrix3f		(normalInverse).mul(normal),
+						new Matrix4f(cameraInverse).mul(transform),
+						new Matrix3f(normalInverse).mul(normal),
 						textureScale
 				),
 				context,

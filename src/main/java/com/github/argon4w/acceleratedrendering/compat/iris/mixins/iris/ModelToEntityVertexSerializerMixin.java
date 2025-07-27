@@ -5,14 +5,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(ModelToEntityVertexSerializer.class)
+@Mixin(value = ModelToEntityVertexSerializer.class, remap = false)
 public class ModelToEntityVertexSerializerMixin {
 
 	@ModifyConstant(
 			method		= "serialize",
 			constant	= @Constant(longValue = 42L)
 	)
-	public long modifyMidU(long constant) {
+	public long redirectMidU(long constant) {
 		return 44L;
 	}
 
@@ -20,7 +20,7 @@ public class ModelToEntityVertexSerializerMixin {
 			method		= "serialize",
 			constant	= @Constant(longValue = 46L)
 	)
-	public long modifyMidV(long constant) {
+	public long redirectMidV(long constant) {
 		return 48L;
 	}
 
@@ -28,7 +28,7 @@ public class ModelToEntityVertexSerializerMixin {
 			method		= "serialize",
 			constant	= @Constant(longValue = 50L)
 	)
-	public long modifyTangent(long constant) {
+	public long redirectTangent(long constant) {
 		return 52L;
 	}
 }

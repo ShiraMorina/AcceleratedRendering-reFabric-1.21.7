@@ -34,7 +34,6 @@ public class IBufferEnvironmentPresetsMixin {
 				value,
 				DefaultVertexFormat	.BLOCK,
 				IrisVertexFormats	.TERRAIN,
-				IrisPrograms		.IRIS_BLOCK_MESH_UPLOADING_KEY,
 				IrisPrograms		.IRIS_BLOCK_VERTEX_TRANSFORM_KEY
 		));
 	}
@@ -52,7 +51,6 @@ public class IBufferEnvironmentPresetsMixin {
 				value,
 				DefaultVertexFormat	.NEW_ENTITY,
 				IrisVertexFormats	.ENTITY,
-				IrisPrograms		.IRIS_ENTITY_MESH_UPLOADING_KEY,
 				IrisPrograms		.IRIS_ENTITY_VERTEX_TRANSFORM_KEY
 		));
 	}
@@ -70,7 +68,6 @@ public class IBufferEnvironmentPresetsMixin {
 				value,
 				DefaultVertexFormat	.POSITION_COLOR_TEX_LIGHTMAP,
 				IrisVertexFormats	.GLYPH,
-				IrisPrograms		.IRIS_GLYPH_MESH_UPLOADING_KEY,
 				IrisPrograms		.IRIS_GLYPH_VERTEX_TRANSFORM_KEY
 		));
 	}

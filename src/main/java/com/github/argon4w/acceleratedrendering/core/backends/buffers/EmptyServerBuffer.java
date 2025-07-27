@@ -1,19 +1,17 @@
 package com.github.argon4w.acceleratedrendering.core.backends.buffers;
 
-import java.nio.ByteBuffer;
-
 public class EmptyServerBuffer implements IServerBuffer {
 
 	public static final EmptyServerBuffer INSTANCE = new EmptyServerBuffer();
 
 	@Override
-	public int getBufferHandle() {
+	public int getOffset() {
 		return 0;
 	}
 
 	@Override
-	public void delete() {
-
+	public int getBufferHandle() {
+		return 0;
 	}
 
 	@Override
@@ -22,7 +20,17 @@ public class EmptyServerBuffer implements IServerBuffer {
 	}
 
 	@Override
-	public void data(ByteBuffer data) {
+	public void clearInteger(long offset, int value) {
+
+	}
+
+	@Override
+	public void clearBytes(long offset, long size) {
+
+	}
+
+	@Override
+	public void subData(long offset, int[] data) {
 
 	}
 

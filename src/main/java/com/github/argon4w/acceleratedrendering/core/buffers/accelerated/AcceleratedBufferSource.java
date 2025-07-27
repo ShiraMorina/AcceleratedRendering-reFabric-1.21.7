@@ -7,39 +7,38 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 
 import java.util.Map;
-import java.util.Set;
+import java.util.SequencedMap;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class AcceleratedBufferSource extends MultiBufferSource.BufferSource implements IAcceleratedBufferSource {
 
-	private final	IBufferEnvironment										bufferEnvironment;
-	private final	Map<RenderType, DrawContextPool.IndirectDrawContext>	drawContexts;
-	private final	AcceleratedBufferSetPool								acceleratedBufferSetPool;
-	private final	Set<AcceleratedBufferSetPool.BufferSet>					bufferSets;
+	private final	IBufferEnvironment																						bufferEnvironment;
+	private final	AcceleratedBufferSetPool																				acceleratedBufferSetPool;
+	private final	SequencedMap<AcceleratedBufferSetPool.BufferSet, Map<RenderType, AcceleratedBufferBuilder>>				acceleratedBuilders;
+	private final	SequencedMap<AcceleratedBufferSetPool.BufferSet, Map<RenderType, DrawContextPool.IndirectDrawContext>>	acceleratedDrawContexts;
 
-	private			AcceleratedBufferSetPool.BufferSet						currentBufferSet;
-	private 		boolean													used;
+	private			AcceleratedBufferSetPool.BufferSet																		currentBufferSet;
+	private 		boolean																									used;
 
 	public AcceleratedBufferSource(IBufferEnvironment bufferEnvironment) {
 		super(null, null);
 
 		this.bufferEnvironment			= bufferEnvironment;
-		this.drawContexts				= new Object2ObjectLinkedOpenHashMap<>	();
+		this.acceleratedBuilders		= new Object2ObjectLinkedOpenHashMap<>	();
 		this.acceleratedBufferSetPool	= new AcceleratedBufferSetPool			(this.bufferEnvironment);
-		this.currentBufferSet			= this.acceleratedBufferSetPool	.get	(false);
-		this.bufferSets					= ObjectLinkedOpenHashSet		.of		(this.currentBufferSet);
-		this.used						= false;
-	}
+		this.acceleratedDrawContexts	= new Object2ObjectLinkedOpenHashMap<>	();
 
-	public void delete() {
-		acceleratedBufferSetPool.delete();
+		this.currentBufferSet			= acceleratedBufferSetPool.getBufferSet	();
+		this.used						= false;
+
+		this.acceleratedBuilders	.put										(this.currentBufferSet, new Object2ObjectLinkedOpenHashMap<>());
+		this.acceleratedDrawContexts.put										(this.currentBufferSet, new Object2ObjectLinkedOpenHashMap<>());
 	}
 
 	@Override
@@ -64,25 +63,27 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 
 	@Override
 	public VertexConsumer getBuffer(RenderType renderType) {
-		var builders	= currentBufferSet	.getBuilders();
-		var builder		= builders			.get		(renderType);
+		var builders		= acceleratedBuilders	.get		(currentBufferSet);
+		var builder			= builders				.get		(renderType);
 
 		if (builder != null) {
 			return builder;
 		}
 
-		var vertexBuffer	= currentBufferSet.getVertexBuffer	();
-		var varyingBuffer	= currentBufferSet.getVaryingBuffer	();
-		var elementSegment	= currentBufferSet.getElementSegment();
+		var vertexBuffer	= currentBufferSet	.getVertexBuffer	();
+		var varyingBuffer	= currentBufferSet	.getVaryingBuffer	();
+		var elementSegment	= currentBufferSet	.getElementSegment	();
 
 		if (vertexBuffer == null) {
-			currentBufferSet	= acceleratedBufferSetPool	.get				(true);
-			builders			= currentBufferSet			.getBuilders		();
-			vertexBuffer		= currentBufferSet			.getVertexBuffer	();
-			varyingBuffer		= currentBufferSet			.getVaryingBuffer	();
-			elementSegment		= currentBufferSet			.getElementSegment	();
+			currentBufferSet	= acceleratedBufferSetPool	.getBufferSet		();
+			builders			= new Object2ObjectLinkedOpenHashMap<>			();
 
-			bufferSets										.add				(currentBufferSet);
+			vertexBuffer	= currentBufferSet				.getVertexBuffer	();
+			varyingBuffer	= currentBufferSet				.getVaryingBuffer	();
+			elementSegment	= currentBufferSet				.getElementSegment	();
+
+			acceleratedBuilders								.put				(currentBufferSet, builders);
+			acceleratedDrawContexts							.put				(currentBufferSet, new Object2ObjectLinkedOpenHashMap<>());
 		}
 
 		builder = new AcceleratedBufferBuilder(
@@ -105,17 +106,15 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 			return;
 		}
 
-		for (var bufferSet : bufferSets) {
-			var builders	= bufferSet.getBuilders	();
-			var program		= glGetInteger			(GL_CURRENT_PROGRAM);
-			var barrier		= 0;
+		for (var bufferSet : acceleratedBuilders.keySet()) {
+			var program			= glGetInteger					(GL_CURRENT_PROGRAM);
+			var barrier			= 0;
+			var builders		= acceleratedBuilders		.get(bufferSet);
+			var drawContexts	= acceleratedDrawContexts	.get(bufferSet);
 
-			if (builders.isEmpty()) {
-				continue;
-			}
-
-			bufferEnvironment.selectMeshUploadingProgramDispatcher	().dispatch(builders.values(), bufferSet);
-			bufferEnvironment.selectTransformProgramDispatcher		().dispatch(builders.values());
+			bufferSet											.prepare				();
+			bufferSet											.bindTransformBuffers	();
+			bufferEnvironment.selectTransformProgramDispatcher().dispatch				(builders.values());
 
 			for (var renderType : builders.keySet()) {
 				var builder			= builders	.get				(renderType);
@@ -128,25 +127,25 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 				var mode		= renderType.mode;
 				var drawContext	= bufferSet	.getDrawContext();
 
-				elementSegment	.allocateOffset		();
-				bufferSet		.bindElementBuffer	(elementSegment);
-				drawContext		.bindComputeBuffers	(elementSegment);
-				drawContexts	.put				(renderType, drawContext);
+				drawContext	.bindComputeBuffers	(elementSegment);
+				drawContexts.put				(renderType, drawContext);
 
-				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)	.dispatch(builder);
-				barrier |= builder			.getCullingProgramDispatcher		()		.dispatch(builder);
+				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)		.dispatch(builder);
+				barrier |= bufferEnvironment.selectCullProgramDispatcher		(renderType).dispatch(builder);
 			}
 
-			glMemoryBarrier					(barrier);
-			glUseProgram					(program);
-			BufferUploader	.invalidate		();
-			bufferSet		.bindDrawBuffers();
+			glMemoryBarrier				(barrier);
+			glUseProgram				(program);
+			BufferUploader.invalidate	();
+
+			bufferSet.bindVertexArray();
+			bufferSet.bindDrawBuffers();
 
 			for (var renderType : drawContexts.keySet()) {
-				renderType						.setupRenderState	();
+				renderType.setupRenderState();
 
-				var drawContext	= drawContexts	.get				(renderType);
-				var shader		= RenderSystem	.getShader			();
+				var drawContext	= drawContexts	.get		(renderType);
+				var shader		= RenderSystem	.getShader	();
 				var mode		= renderType	.mode;
 
 				shader.setDefaultUniforms(
@@ -162,14 +161,29 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 				renderType	.clearRenderState	();
 			}
 
-			glMemoryBarrier				(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-			bufferSet		.reset		();
-			bufferSet		.setInFlight();
-			drawContexts	.clear		();
+			DrawContextPool	.waitBarriers		();
+			bufferSet		.resetVertexArray	();
+		}
+	}
+
+	@Override
+	public void clearBuffers() {
+		if (!used) {
+			return;
 		}
 
+		for (var bufferSet : acceleratedBuilders.keySet()) {
+			bufferSet.reset			();
+			bufferSet.setInFlight	();
+		}
+
+		acceleratedBuilders		.clear	();
+		acceleratedDrawContexts	.clear	();
+
+		currentBufferSet	= acceleratedBufferSetPool.getBufferSet();
 		used				= false;
-		currentBufferSet	= acceleratedBufferSetPool	.get(false);
-		bufferSets										.add(currentBufferSet);
+
+		acceleratedBuilders		.put	(currentBufferSet, new Object2ObjectLinkedOpenHashMap<>());
+		acceleratedDrawContexts	.put	(currentBufferSet, new Object2ObjectLinkedOpenHashMap<>());
 	}
 }

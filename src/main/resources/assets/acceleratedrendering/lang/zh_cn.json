@@ -16,8 +16,6 @@
   "acceleratedrendering.configuration.core_settings.force_translucent_acceleration.tooltip": "- DISABLED: 除非其他MOD在渲染其面片时显示声明加速半透明, 否则被标记为半透明的RenderType将会在加速管线不支持半透明排序时使用原版渲染管线.\n- ENABLED: 除非其他MOD在渲染其面片时显式声明关闭强制半透明加速, 否则即使加速管线不支持半透明排序, 被标记为半透明的RenderType依然会使用加速管线进行渲染.",
   "acceleratedrendering.configuration.core_settings.cache_identical_pose": "启用相同变换缓存",
   "acceleratedrendering.configuration.core_settings.cache_identical_pose.tooltip": "- DISABLED: 除非其他MOD在渲染其面片时显示声明开启相同变换缓存, 否则具有相同变换矩阵和法线矩阵的变化将不会缓存, 部分降低CPU计算压力但是占用更多显存.\n- ENABLED: 除非其他MOD在渲染其面片时显示声明关闭相同变换缓存, 否则具有相同变换矩阵和法线矩阵的变化将会使用缓存中已有的数据, 小幅提升CPU计算压力但是占用更少显存.",
-  "acceleratedrendering.configuration.core_settings.mesh_info_cache_type": "模型实例缓存类型",
-  "acceleratedrendering.configuration.core_settings.mesh_info_cache_type.tooltip": "- SIMPLE: 最基础的缓存实现, 通常用来检测其他缓存类型是否正常工作.\n- HANDLE: 更快的缓存实现, 使用VarHandle和扁平化数据来提高读写性能.\n- UNSAFE: 最快的缓存实现, 使用了不安全的内存操作来跳过多项检查进行读写.",
   "acceleratedrendering.configuration.core_settings.button": "配置",
   "acceleratedrendering.configuration.accelerated_entity_rendering": "加速实体渲染配置",
   "acceleratedrendering.configuration.accelerated_entity_rendering.tooltip": "加速实体渲染使用GPU对ModelPart进行缓存和顶点变换, 而非原版在CPU每次渲染时重建和变换顶点.",

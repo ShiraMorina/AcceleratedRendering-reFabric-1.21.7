@@ -23,10 +23,7 @@ public class VertexMultipleConsumerMixin implements IAcceleratedVertexConsumer {
 
 	@Unique private			boolean				accelerated = true;
 
-	@Inject(
-			method	= "<init>",
-			at		= @At("TAIL")
-	)
+	@Inject(method = "<init>", at = @At("TAIL"))
 	public void constructor(VertexConsumer[] delegates, CallbackInfo ci) {
 		for (var delegate : delegates) {
 			accelerated = accelerated && delegate

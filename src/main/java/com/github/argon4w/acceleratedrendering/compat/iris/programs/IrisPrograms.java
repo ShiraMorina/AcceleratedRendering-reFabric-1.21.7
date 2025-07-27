@@ -7,6 +7,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.LoadComputeShaderEv
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.github.argon4w.acceleratedrendering.core.utils.ResourceLocationUtils;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -26,9 +27,6 @@ public class IrisPrograms {
 	public static final ResourceLocation IRIS_ENTITY_TRIANGLE_PROCESSING_KEY	= ResourceLocationUtils.create("compat_entity_triangle_processing_iris");
 	public static final ResourceLocation IRIS_GLYPH_QUAD_PROCESSING_KEY			= ResourceLocationUtils.create("compat_glyph_quad_processing_iris");
 	public static final ResourceLocation IRIS_GLYPH_TRIANGLE_PROCESSING_KEY		= ResourceLocationUtils.create("compat_glyph_triangle_processing_iris");
-	public static final ResourceLocation IRIS_BLOCK_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_block_mesh_uploading_iris");
-	public static final ResourceLocation IRIS_ENTITY_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_entity_mesh_uploading_iris");
-	public static final ResourceLocation IRIS_GLYPH_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_glyph_mesh_uploading_iris");
 
 	@SubscribeEvent
 	public static void onLoadComputeShaders(LoadComputeShaderEvent event) {
@@ -113,38 +111,32 @@ public class IrisPrograms {
 				ResourceLocationUtils	.create("shaders/compat/processing/iris_glyph_triangle_processing_shader.compute"),
 				BarrierFlags			.SHADER_STORAGE
 		);
-
-		event.loadComputeShader(
-				IRIS_BLOCK_MESH_UPLOADING_KEY,
-				ResourceLocationUtils	.create("shaders/compat/uploading/iris_block_mesh_uploading_shader.compute"),
-				BarrierFlags			.SHADER_STORAGE
-		);
-
-		event.loadComputeShader(
-				IRIS_ENTITY_MESH_UPLOADING_KEY,
-				ResourceLocationUtils	.create("shaders/compat/uploading/iris_entity_mesh_uploading_shader.compute"),
-				BarrierFlags			.SHADER_STORAGE
-		);
-
-		event.loadComputeShader(
-				IRIS_GLYPH_MESH_UPLOADING_KEY,
-				ResourceLocationUtils	.create("shaders/compat/uploading/iris_glyph_mesh_uploading_shader.compute"),
-				BarrierFlags			.SHADER_STORAGE
-		);
 	}
 
 	@SubscribeEvent
 	public static void onLoadCullingPrograms(LoadCullingProgramSelectorEvent event) {
 		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisCullingProgramSelector(
 				parent,
-				IRIS_BLOCK_QUAD_CULLING_KEY,
+				VertexFormat.Mode.TRIANGLES,
 				IRIS_BLOCK_TRIANGLE_CULLING_KEY
+		));
+
+		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisCullingProgramSelector(
+				parent,
+				VertexFormat.Mode.QUADS,
+				IRIS_BLOCK_QUAD_CULLING_KEY
 		));
 
 		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisCullingProgramSelector(
 				parent,
-				IRIS_ENTITY_QUAD_CULLING_KEY,
+				VertexFormat.Mode.TRIANGLES,
 				IRIS_ENTITY_TRIANGLE_CULLING_KEY
+		));
+
+		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisCullingProgramSelector(
+				parent,
+				VertexFormat.Mode.QUADS,
+				IRIS_ENTITY_QUAD_CULLING_KEY
 		));
 	}
 
@@ -152,19 +144,43 @@ public class IrisPrograms {
 	public static void onLoadPolygonProcessors(LoadPolygonProcessorEvent event) {
 		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisPolygonProcessor(
 				parent,
-				IRIS_BLOCK_QUAD_PROCESSING_KEY,
+				IrisVertexFormats.TERRAIN,
+				VertexFormat.Mode.TRIANGLES,
 				IRIS_BLOCK_TRIANGLE_PROCESSING_KEY
+		));
+
+		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisPolygonProcessor(
+				parent,
+				IrisVertexFormats.TERRAIN,
+				VertexFormat.Mode.QUADS,
+				IRIS_BLOCK_QUAD_PROCESSING_KEY
 		));
 
 		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisPolygonProcessor(
 				parent,
-				IRIS_ENTITY_QUAD_PROCESSING_KEY,
+				IrisVertexFormats.ENTITY,
+				VertexFormat.Mode.TRIANGLES,
 				IRIS_ENTITY_TRIANGLE_PROCESSING_KEY
+		));
+
+		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisPolygonProcessor(
+				parent,
+				IrisVertexFormats.ENTITY,
+				VertexFormat.Mode.QUADS,
+				IRIS_ENTITY_QUAD_PROCESSING_KEY
 		));
 
 		event.loadFor(IrisVertexFormats.GLYPH, parent -> new IrisPolygonProcessor(
 				parent,
-				IRIS_GLYPH_QUAD_PROCESSING_KEY,
+				IrisVertexFormats.GLYPH,
+				VertexFormat.Mode.QUADS,
+				IRIS_GLYPH_QUAD_PROCESSING_KEY
+		));
+
+		event.loadFor(IrisVertexFormats.GLYPH, parent -> new IrisPolygonProcessor(
+				parent,
+				IrisVertexFormats.GLYPH,
+				VertexFormat.Mode.TRIANGLES,
 				IRIS_GLYPH_TRIANGLE_PROCESSING_KEY
 		));
 	}

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class AcceleratedBufferSourceSetMixin {
 
 	@WrapOperation(
-			method	= "apply(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;",
+			method	= "get",
 			at		= @At(
 					value	= "FIELD",
 					target	= "Lnet/minecraft/client/renderer/RenderType;name:Ljava/lang/String;"

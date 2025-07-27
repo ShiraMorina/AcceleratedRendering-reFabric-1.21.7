@@ -1,5 +1,7 @@
 package com.github.argon4w.acceleratedrendering.core.backends.buffers;
 
+import org.lwjgl.system.MemoryStack;
+
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -37,8 +39,25 @@ public class ImmutableBuffer implements IServerBuffer {
 		);
 	}
 
+	public void flush(long length) {
+		glFlushMappedNamedBufferRange(
+				bufferHandle,
+				0,
+				length
+		);
+	}
+
 	public void unmap() {
 		glUnmapNamedBuffer(bufferHandle);
+	}
+
+	public void delete() {
+		glDeleteBuffers(bufferHandle);
+	}
+
+	@Override
+	public int getOffset() {
+		return 0;
 	}
 
 	@Override
@@ -47,20 +66,45 @@ public class ImmutableBuffer implements IServerBuffer {
 	}
 
 	@Override
-	public void delete() {
-		glDeleteBuffers(bufferHandle);
-	}
-
-	@Override
 	public void bind(int target) {
 		glBindBuffer(target, bufferHandle);
 	}
 
 	@Override
-	public void data(ByteBuffer data) {
+	public void clearInteger(long offset, int value) {
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			glClearNamedBufferSubData(
+					bufferHandle,
+					GL_R32UI,
+					offset,
+					Integer.BYTES,
+					GL_RED_INTEGER,
+					GL_UNSIGNED_INT,
+					stack
+							.malloc(4)
+							.putInt(0, value)
+			);
+		}
+	}
+	
+	@Override
+	public void clearBytes(long offset, long size) {
+		glClearNamedBufferSubData(
+				bufferHandle,
+				GL_R8UI,
+				offset,
+				size,
+				GL_RED_INTEGER,
+				GL_UNSIGNED_BYTE,
+				(ByteBuffer) null
+		);
+	}
+
+	@Override
+	public void subData(long offset, int[] data) {
 		glNamedBufferSubData(
 				bufferHandle,
-				0,
+				offset,
 				data
 		);
 	}

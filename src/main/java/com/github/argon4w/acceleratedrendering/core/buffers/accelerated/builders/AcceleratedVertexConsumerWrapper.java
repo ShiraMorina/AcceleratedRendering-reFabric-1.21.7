@@ -2,7 +2,6 @@ package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builder
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
-import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import lombok.experimental.ExtensionMethod;
@@ -75,15 +74,17 @@ public abstract class AcceleratedVertexConsumerWrapper implements IAcceleratedVe
 
 	@Override
 	public void addServerMesh(
-			ServerMesh	serverMesh,
-			int			color,
-			int			light,
-			int			overlay
+			int offset,
+			int size,
+			int color,
+			int light,
+			int overlay
 	) {
 		getDelegate				()
 				.getAccelerated	()
 				.addServerMesh	(
-						serverMesh,
+						offset,
+						size,
 						color,
 						light,
 						overlay

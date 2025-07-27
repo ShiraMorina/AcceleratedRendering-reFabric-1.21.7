@@ -1,13 +1,13 @@
 package com.github.argon4w.acceleratedrendering.core.backends.buffers;
 
-import java.nio.ByteBuffer;
-
 public interface IServerBuffer {
 
+	int getOffset       ();
 	int getBufferHandle ();
-	void delete			();
-	void bind           (int		target);
-	void data			(ByteBuffer	data);
-	void bindBase       (int		target, int index);
-	void bindRange      (int		target, int index, long offset, long size);
+	void bind           (int	target);
+	void clearInteger   (long	offset,	int		value);
+	void clearBytes     (long	offset,	long	size);
+	void subData        (long	offset,	int[]	data);
+	void bindBase       (int	target,	int		index);
+	void bindRange      (int	target,	int		index,	long	offset,	long	size);
 }

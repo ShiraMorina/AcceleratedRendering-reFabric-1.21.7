@@ -15,23 +15,16 @@ public class ComputeProgram {
 		this.barrierFlags	= barrierFlags;
 	}
 
-	public void dispatch(
-			int countX,
-			int countY,
-			int countZ
-	) {
+	public void dispatch(int count) {
 		glDispatchCompute(
-				countX,
-				countY,
-				countZ
+				count,
+				1,
+				1
 		);
 	}
 
-	public void linkProgram() {
+	public boolean linkProgram() {
 		glLinkProgram(programHandle);
-	}
-
-	public boolean isLinked() {
 		return glGetProgrami(programHandle, GL_LINK_STATUS) == GL_TRUE;
 	}
 
@@ -49,10 +42,6 @@ public class ComputeProgram {
 
 	public void waitBarriers() {
 		glMemoryBarrier(barrierFlags);
-	}
-
-	public void waitBarriers(int additional) {
-		glMemoryBarrier(barrierFlags | additional);
 	}
 
 	public int getUniformLocation(String name) {

@@ -17,11 +17,8 @@ public class ComputeShader {
 		glShaderSource(shaderHandle, source);
 	}
 
-	public void compileShader() {
+	public boolean compileShader() {
 		glCompileShader(shaderHandle);
-	}
-
-	public boolean isCompiled() {
 		return glGetShaderi(shaderHandle, GL_COMPILE_STATUS) == GL_TRUE;
 	}
 

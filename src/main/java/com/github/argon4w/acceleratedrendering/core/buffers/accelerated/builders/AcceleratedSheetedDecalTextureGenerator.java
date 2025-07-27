@@ -1,6 +1,5 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders;
 
-import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.ExtensionMethod;
@@ -18,7 +17,7 @@ import java.nio.ByteBuffer;
 )
 public class AcceleratedSheetedDecalTextureGenerator extends AcceleratedVertexConsumerWrapper {
 
-	@EqualsAndHashCode.Include private	final	VertexConsumer	delegate;
+	@EqualsAndHashCode.Include private 	final	VertexConsumer	delegate;
 	@EqualsAndHashCode.Include private	final	Matrix4f		cameraInverse;
 	private                             final	Matrix3f		normalInverse;
 	private								final	float			textureScale;
@@ -87,15 +86,17 @@ public class AcceleratedSheetedDecalTextureGenerator extends AcceleratedVertexCo
 
 	@Override
 	public void addServerMesh(
-			ServerMesh	serverMesh,
-			int			color,
-			int			light,
-			int			overlay
+			int offset,
+			int size,
+			int color,
+			int light,
+			int overlay
 	) {
 		getDelegate				()
 				.getAccelerated	()
 				.addServerMesh	(
-						serverMesh,
+						offset,
+						size,
 						-1,
 						light,
 						overlay

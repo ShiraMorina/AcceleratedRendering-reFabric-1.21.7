@@ -5,15 +5,15 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderPrograms;
+import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
 
-public class PassThroughCullingProgramDispatcher implements ICullingProgramDispatcher {
+public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispatcher {
 
-	public	static	final		PassThroughCullingProgramDispatcher	QUAD				= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.QUADS,		ComputeShaderPrograms.CORE_PASS_THROUGH_QUAD_CULLING_KEY);
-	public	static	final		PassThroughCullingProgramDispatcher	TRIANGLE			= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.TRIANGLES,	ComputeShaderPrograms.CORE_PASS_THROUGH_TRIANGLE_CULLING_KEY);
-	private static	final		int									GROUP_SIZE			= 128;
-	private static	final		int									DISPATCH_COUNT_Y_Z	= 1;
+	public static final		PassThroughCullingProgramDispatcher	QUAD		= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.QUADS,		ComputeShaderPrograms.CORE_PASS_THROUGH_QUAD_CULLING_KEY);
+	public static final		PassThroughCullingProgramDispatcher	TRIANGLE	= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.TRIANGLES,	ComputeShaderPrograms.CORE_PASS_THROUGH_TRIANGLE_CULLING_KEY);
+	private static final	int									GROUP_SIZE	= 128;
 
 	private final VertexFormat.Mode	mode;
 	private final ComputeProgram	program;
@@ -29,25 +29,17 @@ public class PassThroughCullingProgramDispatcher implements ICullingProgramDispa
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder			.getTotalVertexCount();
+		var vertexCount		= builder.getVertexCount	();
+		var vertexOffset	= builder.getVertexOffset	();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt((int) (builder.getVertexBuffer().getOffset() / builder.getVertexSize()));
+		vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
 
 		program.useProgram	();
-		program.dispatch	(
-				(polygonCount + GROUP_SIZE - 1) / GROUP_SIZE,
-				DISPATCH_COUNT_Y_Z,
-				DISPATCH_COUNT_Y_Z
-		);
+		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
 		program.resetProgram();
 
 		return program.getBarrierFlags();
-	}
-
-	@Override
-	public boolean shouldCull() {
-		return false;
 	}
 }

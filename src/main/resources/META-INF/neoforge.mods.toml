@@ -35,7 +35,7 @@ displayName="${mod_name}" #mandatory
 displayURL="https://github.com/Argon4W/AcceleratedRendering" #optional
 
 # A file name (in the root of the mod JAR) containing a logo for display
-logoFile="logo.png" #optional
+#logoFile="examplemod.png" #optional
 
 # A text field displayed in the mod UI
 #credits="" #optional
@@ -55,10 +55,6 @@ config="${mod_id}.core.mixins.json"
 # Accelerated Rendering Iris Compatibility Feature Mixins
 [[mixins]]
 config="${mod_id}.compat.iris.mixins.json"
-
-# Immediately Fast Compatibility Feature Mixins
-[[mixins]]
-config="${mod_id}.feature.immediatelyfast.mixins.json"
 
 # Accelerated Entity Rendering Feature Mixins
 [[mixins]]
@@ -83,10 +79,6 @@ config="${mod_id}.feature.simplebedrockmodel.mixins.json"
 # Touhou Little Maid Acceleration Feature Mixins
 [[mixins]]
 config="${mod_id}.feature.touhoulittlemaid.mixins.json"
-
-# Geckolib Acceleration Feature Mixins
-[[mixins]]
-config="${mod_id}.feature.geckolib.mixins.json"
 
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
@@ -157,4 +149,4 @@ config="${mod_id}.feature.geckolib.mixins.json"
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
 # stop your mod loading on the server for example.
 [features.${mod_id}]
-openGLVersion="[4.4,)"
+openGLVersion="[4.6,)"

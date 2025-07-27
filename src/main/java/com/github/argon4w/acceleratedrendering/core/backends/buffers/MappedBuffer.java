@@ -4,49 +4,43 @@ import lombok.Getter;
 
 import static org.lwjgl.opengl.GL46.*;
 
-@Getter
 public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 
-	protected long address;
-	protected long position;
+	public static 	final 	int 	AUTO_FLUSH_BITS		= GL_DYNAMIC_STORAGE_BIT	| GL_MAP_PERSISTENT_BIT	| GL_MAP_WRITE_BIT	| GL_MAP_COHERENT_BIT;
+	public static 	final 	int 	VERB_FLUSH_BITS		= GL_DYNAMIC_STORAGE_BIT	| GL_MAP_PERSISTENT_BIT	| GL_MAP_WRITE_BIT;
 
-	public MappedBuffer(long initialSize) {
-		super(initialSize,	GL_MAP_PERSISTENT_BIT
-				| 			GL_MAP_WRITE_BIT
-				|			GL_MAP_COHERENT_BIT);
+	public static 	final 	int 	AUTO_FLUSH_MAP_BITS	= GL_MAP_WRITE_BIT			| GL_MAP_PERSISTENT_BIT	| GL_MAP_COHERENT_BIT;
+	public static 	final 	int 	VERB_FLUSH_MAP_BITS	= GL_MAP_WRITE_BIT			| GL_MAP_PERSISTENT_BIT	| GL_MAP_FLUSH_EXPLICIT_BIT;
 
+	private 		final 	int 	mapBits;
+
+			protected 		long 	address;
+	@Getter protected 		long	position;
+
+	public int meshCount;
+
+	public MappedBuffer(long initialSize, boolean autoFlush) {
+		super(initialSize, autoFlush ? AUTO_FLUSH_BITS : VERB_FLUSH_BITS);
+
+		this.mapBits	= autoFlush ? AUTO_FLUSH_MAP_BITS : VERB_FLUSH_MAP_BITS;
 		this.address	= map();
 		this.position	= 0L;
 	}
 
-	@Override
-	public long reserve(long bytes, boolean occupied) {
-		if (bytes <= 0) {
-			return address + position;
-		}
-
-		var oldPosition = this.position;
-		var newPosition = oldPosition + bytes;
-
-		if (occupied) {
-			this.position = newPosition;
-		}
-
-		if (newPosition <= size) {
-			return address + oldPosition;
-		}
-
-		resize(newPosition);
-		return address + oldPosition;
+	public MappedBuffer(long initialSize) {
+		this(initialSize, false);
 	}
 
 	@Override
 	public long reserve(long bytes) {
-		return reserve(bytes, true);
-	}
+		var position	=	this.position;
+		this.position	+=	bytes;
 
-	@Override
-	public long addressAt(long position) {
+		if (this.position <= size) {
+			return address + position;
+		}
+
+		resize(this.position);
 		return address + position;
 	}
 
@@ -60,13 +54,21 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 		address = map();
 	}
 
-	public void reset() {
-		position = 0;
+	@Override
+	public void bind(int target) {
+		throw new IllegalStateException("Buffer is mapped.");
+	}
+
+	public void flush() {
+		glBuffer.flush(position);
 	}
 
 	public long map() {
-		return map(	GL_MAP_WRITE_BIT
-				|	GL_MAP_PERSISTENT_BIT
-				|	GL_MAP_COHERENT_BIT);
+		return map(mapBits);
+	}
+
+	public void reset() {
+		position = 0;
+		meshCount = 0;
 	}
 }
